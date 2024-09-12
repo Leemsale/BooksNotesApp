@@ -1,0 +1,65 @@
+<%- include("partials/header.ejs") %>
+    <div class="about">
+        <h2>About Page Turners</h2>
+        <p>Page Turners is a vibrant community of book enthusiasts who come
+            together to share their love for reading. This site is designed to
+            help readers discover new books, organize their reading lists,
+            and highlight their favorite reads with personalized notes.
+            Whether you're exploring literary classics or contemporary bestsellers,
+            Page Turners is your space to connect with fellow book lovers and track
+            your reading journey. Feel free to share your insights on the books you've read
+            or you can add to other turners' insights!Enjoy!!🎉🎉
+        </p>
+        <hr />
+    </div>
+
+    <% if (noResults && search) { %>
+        <p class="no-book">Oops!No book or author found matching "<%= search %>".<br> Feel free
+                to add it on the list once you've read it!</p>
+        <% } else { %>
+            <ul>
+                <% books.forEach(book=> { %>
+                    <li class="book-item">
+                        <img src="<%= book.cover_url %>" alt="Book cover for <%= book.title %>"
+                            onerror="this.src='https://www.press.uillinois.edu/books/images/no_cover.jpg'" width="150"
+                            class="book-cover">
+                        <div class="book-details">
+                            <h3 class="title">
+                                <%= book.title %>
+                            </h3> by: <p class="author">
+                                <%= book.author %>
+
+                                    <div class="rating">
+                                        <%- include('partials/stars.ejs', { rating: book.rating }) %>
+                                    </div>
+
+                                    <%= book.notes %>
+                            </p>
+                            <div class="book-actions">
+                                <a href="/books/edit/<%= book.id %>" class="edit">Add Insight / Edit</a>
+                                <form action="/books/delete/<%= book.id %>" method="post" style="display: inline;">
+                                    <button class="delete-btn" data-book-id="<%= book.id %>">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+                    <hr />
+                    <% }); %>
+            </ul>
+            <% } %>
+
+                <script>
+                    document.querySelectorAll('.delete-btn').forEach(button => {
+                        button.addEventListener('click', function (event) {
+                            event.preventDefault(); // Prevent the form from submitting by default
+                            const bookId = this.getAttribute('data-book-id');
+
+                            if (confirm('Are you sure you want to delete this book?')) {
+                                // Redirect to the delete route or perform an action to delete the book
+                                this.closest('form').submit();
+                            }
+                        });
+                    });
+                </script>
+
+                <%- include("partials/footer.ejs") %>

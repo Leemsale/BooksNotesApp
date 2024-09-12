@@ -1,0 +1,16 @@
+<%- include("partials/header.ejs") %>
+
+    <h2>Oops! There were some issues with your input:</h2>
+
+    <ul>
+        <% errors.forEach(error=> { %>
+            <p>
+                <%= error.msg %>
+            </p>
+
+            <% }); %>
+    </ul>
+
+    <button onclick="window.history.back()">Try Again</button> <!-- Allows users to return to the previous page -->
+
+    <%- include("partials/footer.ejs") %>

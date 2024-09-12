@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/style.css">
+    <title>Book Summary</title>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📖Page Turners Club!📖</h1>
+
+        <div class="navbar">
+            <a href="/" class="home"><img src="/assets/home.png" alt="home" height="15" />
+                Home </a>
+
+            <% if (isIndexPage) { %>
+                <a href="/books/add" class="new-book" style="color: white;">Add a New Book</a>
+
+                <form action="/" method="GET" class="search">
+                    <input type="text" name="search" placeholder="Search by title or author">
+                    <button type="submit" style="color: #1b1a1a;">🔍Search</button>
+                </form>
+
+
+                <p class="rating">Sort by:
+                    <a href="/?sort=rating">Rating</a> /
+                    <a href="/?sort=alphabetical"><img src="/assets/sort.png" alt="sort alphabetically"
+                            height="20" /></a>
+                </p>
+                <% } %>
+        </div>

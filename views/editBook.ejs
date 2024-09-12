@@ -1,0 +1,25 @@
+<%- include("partials/header.ejs") %>
+
+    <h2>Great, tell us more about this book!</h2>
+    <form action="/books/edit/<%= book.id %>" method="post">
+        <label for="title">Title:</label>
+        <input type="text" name="title" id="title" value="<%= book.title %>" required><br><br>
+
+        <label for="author">Author:</label>
+        <input type="text" name="author" id="author" value="<%= book.author %>" required><br><br>
+
+        <label for="rating">Rating:</label>
+        <input type="text" name="rating" id="rating" value="<%= book.rating %>" min="1" max="5"
+            placeholder="whole numbers, max 5" required><br><br>
+
+        <label for="isbn">ISBN:</label>
+        <input type="text" name="isbn" id="isbn" value="<%= book.cover_identifier %>"><br><br>
+
+        <label for="notes">Notes:</label>
+        <textarea name="notes" id="notes"><%= book.notes %></textarea><br><br>
+
+        <button type="submit">Update Book</button>
+
+    </form>
+
+    <%- include("partials/footer.ejs") %>

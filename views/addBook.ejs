@@ -1,0 +1,23 @@
+<%- include("partials/header.ejs") %>
+
+    <h2>Share with us your highlights on that book you've read recently!!</h2>
+    <form action="/books" method="POST">
+        <label for="title">Title:</label>
+        <input class type="text" name="title" id="title" required><br><br>
+
+        <label for="author">Author:</label>
+        <input type="text" name="author" id="author" required><br><br>
+
+        <label for="rating">Rating:</label>
+        <input type="text" name="rating" id="rating" min="1" max="5" placeholder="whole numbers, max 5"><br><br>
+
+        <label for="isbn">ISBN:</label>
+        <input type="text" name="isbn" id="isbn"><br><br>
+
+        <label for="notes">Notes:</label>
+        <textarea name="notes" id="notes"></textarea><br><br>
+
+        <button type="submit">Add Book</button>
+    </form>
+
+    <%- include("partials/footer.ejs") %>
