@@ -11,11 +11,11 @@ env.config();
 
 // PostgreSQL client setup for connecting to the database
 const db = new pg.Client({
-    user: "postgres",
-    host: "localhost",
-    database: "book_notes",
-    password: process.env.PASSWORD,
-    port: 5432,
+    user: process.env.PGUSER,
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: process.env.PGPORT,
 });
 db.connect();
 
