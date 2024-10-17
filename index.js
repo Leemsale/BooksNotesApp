@@ -1,5 +1,4 @@
 import express from "express";
-import bodyParser from "body-parser";
 import pg from "pg";
 import axios from "axios";
 import { body, validationResult } from 'express-validator';
@@ -20,7 +19,7 @@ const db = new pg.Client({
 db.connect();
 
 // Middleware configuration
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 // Validation rules for book input
@@ -54,15 +53,25 @@ app.get("/", async (req, res, next) => {
         const query = `SELECT * FROM books ${searchQuery} ${sortQuery}`;
         const result = await db.query(query, searchValues);
         const books = result.rows;
+        const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
 
         // For each book, fetch the cover image or use a default one if not available
         const updatedBooks = await Promise.all(books.map(async (book) => {
             if (book.cover_identifier) {
                 try {
-                    const coverUrl = `http://covers.openlibrary.org/b/isbn/${book.cover_identifier}-L.jpg`;
-
-                    await axios.get(coverUrl); // Check if the image exists
-                    book.cover_url = coverUrl;
+                    const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${book.cover_identifier}&key=${apiKey}`);
+                    const items = response.data.items;
+        
+                    // Check if the items array exists and has at least one item
+                    if (items && items.length > 0) {
+                        const bookData = items[0];
+                        const bookId = bookData.id;
+                        book.cover_url = `https://books.google.com/books/content?id=${bookId}&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api`;
+                    } else {
+                        // If no result for the ISBN, use fallback image
+                        console.warn(`No cover found for ISBN ${book.cover_identifier}`);
+                        book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg'; // Fallback image
+                    }
                 } catch (error) {
                     console.error(`Error fetching cover image for ISBN ${book.cover_identifier}:`, error.message);
                     book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg'; // Fallback image
