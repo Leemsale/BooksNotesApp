@@ -1,200 +1,164 @@
 import express from "express";
-import pg from "pg";
 import axios from "axios";
 import { body, validationResult } from 'express-validator';
 import env from "dotenv";
+import fs from "fs";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
 
 const app = express();
 const port = 3000;
 env.config();
 
-// PostgreSQL client setup for connecting to the database
-const db = new pg.Client({
-    user: process.env.PGUSER,
-    host: process.env.PGHOST,
-    database: process.env.PGDATABASE,
-    password: process.env.PGPASSWORD,
-    port: process.env.PGPORT,
-});
-db.connect();
+// Get the directory name from the current module's URL
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// File path for JSON data
+const dataFilePath = path.join(__dirname, 'books.json');
 
 // Middleware configuration
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+// Helper function to read the JSON file
+const readBooksData = () => {
+    const data = fs.readFileSync(dataFilePath, 'utf8');
+    return JSON.parse(data);
+};
+
+// Helper function to write to the JSON file
+const writeBooksData = (data) => {
+    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf8');
+};
+
 // Validation rules for book input
 const bookValidationRules = [
     body('title').notEmpty().withMessage('Title is required'),
     body('author').notEmpty().withMessage('Author name is required'),
-    body('rating').isInt({ min: 1, max: 5}).withMessage('Rating must be a whole number between 1 & 5')
+    body('rating').isInt({ min: 1, max: 5 }).withMessage('Rating must be a whole number between 1 & 5')
 ];
 
 // GET route for fetching and displaying all books on the homepage
-app.get("/", async (req, res, next) => {
-    const { sort, search} = req.query;
-    let sortQuery = '';
-    let searchQuery = '';
-    const searchValues = [];
-
-    // Apply sorting and filtering based on user input
+app.get("/", async (req, res) => {
+    const { sort, search } = req.query;
+    let books = readBooksData();
+    
+    // Apply sorting
     if (sort === 'rating') {
-        sortQuery = 'ORDER BY rating DESC';
+        books.sort((a, b) => b.rating - a.rating);
     } else if (sort === 'alphabetical') {
-        sortQuery = 'ORDER BY title ASC';
+        books.sort((a, b) => a.title.localeCompare(b.title));
     }
 
+    // Apply search filter
     if (search) {
-        searchQuery = `WHERE title ILIKE $1 OR author ILIKE $1`;
-        searchValues.push(`%${search}%`);
+        books = books.filter(book => 
+            book.title.toLowerCase().includes(search.toLowerCase()) || 
+            book.author.toLowerCase().includes(search.toLowerCase())
+        );
     }
 
-    try {
-        // Fetch books from database with optional search and sorting
-        const query = `SELECT * FROM books ${searchQuery} ${sortQuery}`;
-        const result = await db.query(query, searchValues);
-        const books = result.rows;
-        const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
+    const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
 
-        // For each book, fetch the cover image or use a default one if not available
-        const updatedBooks = await Promise.all(books.map(async (book) => {
-            if (book.cover_identifier) {
-                try {
-                    const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${book.cover_identifier}&key=${apiKey}`);
-                    const items = response.data.items;
-        
-                    // Check if the items array exists and has at least one item
-                    if (items && items.length > 0) {
-                        const bookData = items[0];
-                        const bookId = bookData.id;
-                        book.cover_url = `https://books.google.com/books/content?id=${bookId}&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api`;
-                    } else {
-                        // If no result for the ISBN, use fallback image
-                        console.warn(`No cover found for ISBN ${book.cover_identifier}`);
-                        book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg'; // Fallback image
-                    }
-                } catch (error) {
-                    console.error(`Error fetching cover image for ISBN ${book.cover_identifier}:`, error.message);
-                    book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg'; // Fallback image
+    // For each book, fetch the cover image or use a default one if not available
+    const updatedBooks = await Promise.all(books.map(async (book) => {
+        if (book.cover_identifier) {
+            try {
+                const response = await axios.get(`https://www.googleapis.com/books/v1/volumes?q=isbn:${book.cover_identifier}&key=${apiKey}`);
+                const items = response.data.items;
+
+                if (items && items.length > 0) {
+                    const bookData = items[0];
+                    const bookId = bookData.id;
+                    book.cover_url = `https://books.google.com/books/content?id=${bookId}&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs-api`;
+                } else {
+                    book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg';
                 }
-            } else {
-                book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg'; // Default image
+            } catch (error) {
+                book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg';
             }
-            return book;
-        }));
+        } else {
+            book.cover_url = 'https://www.press.uillinois.edu/books/images/no_cover.jpg';
+        }
+        return book;
+    }));
 
-        const noResults = updatedBooks.length === 0; // Flag for handling no results
-
-        // Render the index page with the list of books
-        res.render("index.ejs", { books: updatedBooks, isIndexPage: true, noResults, search });
-    } catch (err) {
-        console.error('Database query failed:', err.message);
-        next(err); // Error handling middleware
-    }
+    const noResults = updatedBooks.length === 0;
+    res.render("index.ejs", { books: updatedBooks, isIndexPage: true, noResults, search });
 });
 
 // GET route to render the form for adding a new book
-app.get("/books/add", (req, res, next) => {
+app.get("/books/add", (req, res) => {
     res.render("addBook.ejs", { isIndexPage: false });
 });
 
-// POST route for adding a new book, with form validation
-app.post("/books", bookValidationRules, async (req, res, next) => {
+// POST route for adding a new book
+app.post("/books", bookValidationRules, (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).render('error.ejs', { errors: errors.array(), isIndexPage: false });
     }
     const { title, author, rating, isbn, notes } = req.body;
+    const books = readBooksData();
 
-    try {
-        // Insert a new book into the database
-        const insertQuery = 
-        `INSERT INTO books (title, author, rating, cover_identifier, notes) VALUES ($1, $2, $3, $4, $5)`;
-        await db.query(insertQuery, [title, author, rating, isbn, notes]);
+    // Generate a new ID
+    const newId = books.length > 0 ? books[books.length - 1].id + 1 : 1;
 
-        res.redirect("/");
-    } catch (err) {
-        // Handle specific database constraint errors
-        if (err.message.includes("violates check constraint")) {
-            return res.status(400).render('error.ejs', { 
-                errors: [{ msg: "Rating must be between 1 and 5." }], 
-                isIndexPage: false 
-            });
-        } else if (err.message.includes("invalid input syntax for type integer")) {
-            return res.status(400).render('error.ejs', { 
-                errors: [{ msg: "Rating must be a valid number." }], 
-                isIndexPage: false 
-            });
-        }
+    const newBook = { id: newId, title, author, rating: parseInt(rating), cover_identifier: isbn, notes };
+    books.push(newBook);
+    writeBooksData(books);
 
-        // General error handler
-        console.error('Failed to add the book', err.message);
-        next(err);
-    }
+    res.redirect("/");
 });
 
 // GET route to render the form for editing an existing book
-app.get("/books/edit/:id", async (req, res) => {
-    const bookId = req.params.id; // Get the book ID from the URL
+app.get("/books/edit/:id", (req, res) => {
+    const bookId = parseInt(req.params.id);
+    const books = readBooksData();
+    const book = books.find(b => b.id === bookId);
 
-    try {
-        // Fetch the book details by ID from the database
-        const result = await db.query("SELECT * FROM books WHERE id = $1", [bookId]);
-        const book = result.rows[0];
-
-        // Render the edit page with the book details
-        res.render("editBook.ejs", { book, isIndexPage: false });
-    } catch (err) {
-        console.error(err);
-        next(err);
-    }
-})
+    res.render("editBook.ejs", { book, isIndexPage: false });
+});
 
 // POST route to update an existing book
-app.post("/books/edit/:id", bookValidationRules, async (req, res, next) => {
+app.post("/books/edit/:id", bookValidationRules, (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).render('error.ejs', { errors: errors.array(), isIndexPage: false });
     }
 
-    const bookId = req.params.id;
+    const bookId = parseInt(req.params.id);
     const { title, author, rating, isbn, notes } = req.body;
+    const books = readBooksData();
 
-    try {
-        // Update the book record in the database
-        const updateQuery = 
-        `UPDATE books SET title = $1, author = $2, rating = $3, cover_identifier = $4, notes = $5 WHERE id = $6`;
-        await db.query(updateQuery, [title, author, rating, isbn, notes, bookId]);
-
-        res.redirect("/");
-    } catch (err) {
-        console.error(err);
-        next(err);
+    const bookIndex = books.findIndex(b => b.id === bookId);
+    if (bookIndex !== -1) {
+        books[bookIndex] = { id: bookId, title, author, rating: parseInt(rating), cover_identifier: isbn, notes };
+        writeBooksData(books);
     }
+
+    res.redirect("/");
 });
 
-// POST route to delete a book from the database
-app.post("/books/delete/:id", async (req, res, next) => {
-    const bookId = req.params.id;
+// POST route to delete a book
+app.post("/books/delete/:id", (req, res) => {
+    const bookId = parseInt(req.params.id);
+    let books = readBooksData();
+    books = books.filter(book => book.id !== bookId);
+    writeBooksData(books);
 
-    try {
-        // Delete the book record by ID
-        const deleteQuery = "DELETE FROM books WHERE id = $1";
-        await db.query(deleteQuery, [bookId]);
-
-        res.redirect("/");
-    } catch (err) {
-        console.error(err);
-        next(err);
-    }
+    res.redirect("/");
 });
 
-// Global error handling middleware for unexpected errors
+// Global error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).render('error.ejs', {errors: [{ msg: err.message }], isIndexPage: false });
+    res.status(500).render('error.ejs', { errors: [{ msg: err.message }], isIndexPage: false });
 });
 
-// Server starts listening on the specified port
+// Start server
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });

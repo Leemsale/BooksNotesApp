@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "rating": 4,
+    "cover_identifier": "9780735211292",
+    "notes": "In 'Atomic Habits', James Clear explores the power of small changes in building effective habits. He emphasizes that it's not about making massive shifts but rather focusing on the tiny improvements that compound over time. Clear provides practical strategies and frameworks to help readers create systems that foster success and personal growth."
+  },
+  {
+    "id": 2,
+    "title": "The 5 AM Club",
+    "author": "Robin Sharma",
+    "rating": 3,
+    "cover_identifier": "9781443456622",
+    "notes": "Robin Sharma's 'The 5 AM Club' advocates for waking up early to maximize productivity and personal development. The book illustrates how the first few hours of the day can set the tone for success, focusing on self-improvement, exercise, and creativity. Sharma's engaging storytelling provides a roadmap for anyone looking to take control of their morning and, by extension, their life."
+  },
+  {
+    "id": 3,
+    "title": "The 5 Love Languages",
+    "author": "Gary Chapman",
+    "rating": 4,
+    "cover_identifier": "9780802412706",
+    "notes": "In 'The 5 Love Languages', Gary Chapman presents a framework for understanding how people express and receive love differently. He identifies five distinct love languages, helping individuals communicate better in their relationships. By recognizing and speaking each other's love language, readers can deepen their emotional connections and improve their partnerships."
+  },
+  {
+    "id": 4,
+    "title": "Limitless",
+    "author": "Jim Kwik",
+    "rating": 4,
+    "cover_identifier": "9781401958240",
+    "notes": "Jim Kwik's 'Limitless' offers powerful techniques to enhance memory, learning speed, and mental clarity. The book is a culmination of Kwik's experiences as a brain coach, presenting actionable strategies to help readers break free from limiting beliefs. By adopting a limitless mindset, readers can unlock their full potential and accelerate their personal and professional growth."
+  },
+  {
+    "id": 5,
+    "title": "Dream It, Pin It, Live It",
+    "author": "Terri Savelle Foy",
+    "rating": 5,
+    "cover_identifier": "9781680314724",
+    "notes": "In 'Dream It, Pin It, Live It', Terri Savelle Foy emphasizes the importance of visualization in achieving one's goals. The book encourages readers to create vision boards and engage in daily practices that align their mindset with their dreams. Foy's motivational approach provides practical tools to help readers manifest their aspirations into reality."
+  }
+]
