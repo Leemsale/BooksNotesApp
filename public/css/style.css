@@ -196,3 +196,68 @@ button:hover {
     text-decoration: underline;
     border: 1px solid #1e7e34;
 }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px; /* Less padding for smaller screens */
+    }
+
+    h1 {
+        font-size: 2em; /* Smaller font size */
+    }
+
+    h2 {
+        font-size: 1.3em; /* Smaller font size */
+    }
+
+    .home {
+        padding-top: 5px;
+        margin-right: 34%;
+    }
+
+    .new-book {
+        padding-top: 5px;
+    }
+    .navbar {
+        display: block;
+    }
+
+    .search {
+        margin-top: 20px;
+    }
+
+    .search input {
+        width: 70%; /* Full width on smaller screens */
+    }
+
+    .rating {
+        padding-left: 2px;
+    }
+
+    .book-item {
+        flex-direction: row; /* Stack book items vertically */
+        align-items: center; /* Center align */
+    }
+
+    .book-cover {
+        margin: 0 0 10px 0; /* Margin below cover image */
+        height: 200px;
+    }
+
+    .book-details {
+        max-width: 100%; /* Full width on smaller screens */
+        text-align: justify; /* Center align text */
+        padding-left: 5px;
+        font-size: smaller;
+    }
+
+    .book-actions {
+        flex-direction: row; /* Stack buttons vertically */
+        gap: 5px; /* Less gap */
+    }
+
+    .about {
+        width: 90%; /* Full width for about section */
+    }
+}
